@@ -1,6 +1,6 @@
 {
-  "name": "flv.js",
-  "version": "1.5.0",
+  "name": "flv-g7.js",
+  "version": "1.8.0",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "module": "./src/flv.js",
@@ -8,7 +8,7 @@
   "types": "./d.ts/flv.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Bilibili/flv.js"
+    "url": "https://github.com/g7-opensource/flv.js"
   },
   "keywords": [
     "html5",

@@ -64,6 +64,7 @@ class Transmuxer {
             ctl.on(TransmuxingEvents.SCRIPTDATA_ARRIVED, this._onScriptDataArrived.bind(this));
             ctl.on(TransmuxingEvents.STATISTICS_INFO, this._onStatisticsInfo.bind(this));
             ctl.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
+            ctl.on(TransmuxingEvents.STREAM_TIME, this._onStreamTime.bind(this));
         }
     }
 
@@ -199,6 +200,12 @@ class Transmuxer {
     _onRecommendSeekpoint(milliseconds) {
         Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
+        });
+    }
+
+    _onStreamTime(time) {
+        Promise.resolve().then(() => {
+            this._emitter.emit(TransmuxingEvents.STREAM_TIME, time);
         });
     }
 

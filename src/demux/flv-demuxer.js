@@ -56,6 +56,7 @@ class FLVDemuxer {
         this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
+        this._onStreamTime = null;
 
         this._dataOffset = probeData.dataOffset;
         this._firstParse = true;
@@ -128,6 +129,7 @@ class FLVDemuxer {
         this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
+        this._onStreamTime = null;
     }
 
     static probe(buffer) {
@@ -211,6 +213,14 @@ class FLVDemuxer {
 
     set onDataAvailable(callback) {
         this._onDataAvailable = callback;
+    }
+
+    get onStreamTime() {
+        return this._onStreamTime;
+    }
+
+    set onStreamTime(callback) {
+        this._onStreamTime = callback;
     }
 
     // timestamp base for output samples, must be in milliseconds
@@ -340,6 +350,9 @@ class FLVDemuxer {
                     this._parseAudioData(chunk, dataOffset, dataSize, timestamp);
                     break;
                 case 9:  // Video
+                    if (this._onStreamTime != null) {
+                        this._onStreamTime(timestamp);
+                    }
                     this._parseVideoData(chunk, dataOffset, dataSize, timestamp, byteStart + offset);
                     break;
                 case 18:  // ScriptDataObject

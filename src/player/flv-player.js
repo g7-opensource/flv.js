@@ -87,6 +87,9 @@ class FlvPlayer {
         if (this._alwaysSeekKeyframe) {
             this._config.accurateSeek = false;
         }
+
+        this.callbackStreamTime = null;
+        this._mediaSourceEndCallback = null;
     }
 
     destroy() {
@@ -105,6 +108,9 @@ class FlvPlayer {
 
         this._emitter.removeAllListeners();
         this._emitter = null;
+
+        this.callbackStreamTime = null;
+        this._mediaSourceEndCallback = null;
     }
 
     on(event, listener) {
@@ -153,6 +159,11 @@ class FlvPlayer {
                                ErrorDetails.MEDIA_MSE_ERROR,
                                info
             );
+        });
+        this._msectl.on(MSEEvents.SOURCE_END, (info) => {
+            if (this._mediaSourceEndCallback != null) {
+                this._mediaSourceEndCallback(info);
+            }
         });
 
         this._msectl.attachMediaElement(mediaElement);
@@ -257,6 +268,9 @@ class FlvPlayer {
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = milliseconds / 1000;
             }
+        });
+        this._transmuxer.on(TransmuxingEvents.STREAM_TIME, (ts) => {
+            this._receiveStreamTime(ts);
         });
 
         this._transmuxer.open();
@@ -603,6 +617,20 @@ class FlvPlayer {
 
     _onvProgress(e) {
         this._checkAndResumeStuckPlayback();
+    }
+
+    setMediaSourceEndCallback(call) {
+        this._mediaSourceEndCallback = call;
+    }
+
+    setStreamTimeCallback(call) {
+        this.callbackStreamTime = call;
+    }
+
+    _receiveStreamTime(ts) {
+        if (this.callbackStreamTime != null) {
+            this.callbackStreamTime(ts);
+        }
     }
 
 }

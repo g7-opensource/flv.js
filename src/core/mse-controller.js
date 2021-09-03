@@ -494,6 +494,7 @@ class MSEController {
     _onSourceEnded() {
         // fired on endOfStream
         Log.v(this.TAG, 'MediaSource onSourceEnded');
+        this._emitter.emit(MSEEvents.SOURCE_END, 'MediaSource onSourceEnded');
     }
 
     _onSourceClose() {
