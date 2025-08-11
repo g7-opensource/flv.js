@@ -30,11 +30,15 @@ import {LoaderStatus, LoaderErrors} from '../io/loader.js';
 // Transmuxing (IO, Demuxing, Remuxing) controller, with multipart support
 class TransmuxingController {
 
-    constructor(mediaDataSource, config) {
+    constructor(mediaDataSource, config, mediaElement, bufferSize) {
         this.TAG = 'TransmuxingController';
         this._emitter = new EventEmitter();
 
         this._config = config;
+
+        this._mediaElement = mediaElement;
+
+        this._bufferSize = bufferSize;
 
         // treat single part media as multipart media, which has only one segment
         if (!mediaDataSource.segments) {
@@ -244,7 +248,7 @@ class TransmuxingController {
             consumed = this._demuxer.parseChunks(data, byteStart);
         } else if ((probeData = FLVDemuxer.probe(data)).match) {
             // Always create new FLVDemuxer
-            this._demuxer = new FLVDemuxer(probeData, this._config);
+            this._demuxer = new FLVDemuxer(probeData, this._config, this._mediaElement, this._bufferSize);
 
             if (!this._remuxer) {
                 this._remuxer = new MP4Remuxer(this._config);

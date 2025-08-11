@@ -26,9 +26,11 @@ import MediaInfo from './media-info.js';
 
 class Transmuxer {
 
-    constructor(mediaDataSource, config) {
+    constructor(mediaDataSource, config, mediaElement, bufferSize) {
         this.TAG = 'Transmuxer';
         this._emitter = new EventEmitter();
+        this._mediaElement = mediaElement;
+        this._bufferSize = bufferSize;
 
         if (config.enableWorker && typeof (Worker) !== 'undefined') {
             try {
@@ -45,10 +47,10 @@ class Transmuxer {
             } catch (error) {
                 Log.e(this.TAG, 'Error while initialize transmuxing worker, fallback to inline transmuxing');
                 this._worker = null;
-                this._controller = new TransmuxingController(mediaDataSource, config);
+                this._controller = new TransmuxingController(mediaDataSource, config, mediaElement, bufferSize);
             }
         } else {
-            this._controller = new TransmuxingController(mediaDataSource, config);
+            this._controller = new TransmuxingController(mediaDataSource, config, mediaElement, bufferSize);
         }
 
         if (this._controller) {

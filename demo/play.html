@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>实时视频</title>
+    <link rel="stylesheet" type="text/css" href="play.css" />
+</head>
+
+<body class="mainContainer" onload="onLoad()">
+    <ul class="mainUl" id="idUl" />
+    <label id="idLabel" class="mainLable" style="display: none;"></label>
+    <script src="../dist/flv.js"></script>
+
+    <script>
+        var mapPlayer = {};           
+        var videoObjs = [];
+
+        function onLoad() {
+            for (let i=0; i<8;i++) {
+                let obj = {};
+                obj.id = i;
+                obj.desc ="test";
+                obj.url = "http://172.22.33.239/live?port=1935&app=g7-flv-video&stream=123-"+i.toString();
+                videoObjs.push(obj);
+            }
+            showVideo(8);
+        }
+
+        function showVideo(size){
+            addUiElement(size);
+            setTitleValue();
+            setTimeout(playVideo,1*1000);
+            //playVideo();
+        }
+
+        function playVideo() {
+            for (let i=0; i<videoObjs.length; ++i) {
+                let elVideo = document.getElementById("idVideo" + i.toString());              
+                let videoObj = videoObjs[i];
+
+                let player = flvjs.createPlayer({isLive:this.isLive, type:'flv',url:videoObj.url}, {
+                    lazyLoad: false,
+                    enableStashBuffer: false,
+                    deferLoadAfterSourceOpen:true
+                });
+                player.attachMediaElement(elVideo);
+                player.load();
+
+                mapPlayer[videoObj.id.toString()] = player;
+            }
+        }
+
+        function showMediaState(idx, str) {
+            let elLabel = document.getElementById("idLog" + idx.toString());
+
+            let strNew = "";
+
+            let arrOld = elLabel.innerText.split(/[\r\n]/);
+            if (arrOld.length >= 1) {
+                arrOld.splice(0,1);
+            }
+            for (let i=0; i<arrOld.length; ++i) {
+                strNew += arrOld[i] + "\r\n";
+            }
+            strNew += str;
+
+            elLabel.innerText = strNew;
+        }
+
+        function setTitleValue(){
+            for (let i=0; i<videoObjs.length; ++i) {
+                let titleSpan = document.getElementById("idTitleSpan" + i.toString());
+                titleSpan.innerText = videoObjs[i].desc;
+            }
+        }
+
+        function addUiElement(size) {
+            let sq = Math.sqrt(size);
+            let width = 100/sq + "%";
+            let height = 100/sq + "%";
+
+            for (let i=0; i<size; ++i) {
+                let li = document.createElement("li");
+                li.setAttribute("class", "mainLi");
+                li.style.width = width;
+                li.style.height = height;
+
+                addUiElementTitle(li, i);
+
+                let video = document.createElement("video");
+                video.setAttribute("class", "video-container");
+                video.setAttribute("id", "idVideo" + i.toString());
+                video.autoplay = true;
+                video.muted = true;
+                li.appendChild(video);
+
+                let label = document.createElement("label");
+                label.setAttribute("class", "log-container");
+                label.setAttribute("id", "idLog" + i.toString());
+                li.appendChild(label);
+
+                document.getElementById("idUl").appendChild(li);
+            }
+        }
+ 
+        function onBtCloseClick(event){
+            let idTitleBt = event.target.id;
+            let key = idTitleBt.replace("idTitleCloseBt",""); 
+            mapPlayer[key].destroy();
+
+            let idTitleLabel = idTitleBt.replace("idTitleCloseBt","idTitleLabel");
+            let label = document.getElementById(idTitleLabel);
+            label.innerText = '0KB/S';
+
+            let idLog = idTitleBt.replace("idTitleCloseBt","idLog");
+            label = document.getElementById(idLog);
+            label.innerText = '';
+        }
+
+        function addUiElementTitle(li, i) {
+            let div = document.createElement("div");
+            div.setAttribute("class", "title-container");
+
+            let label = document.createElement("label");
+            label.id = "idTitleLabel" + i.toString();
+            label.setAttribute("class", "el-title-lable");
+            label.innerText="0KB/S"
+
+            let span = document.createElement("span");
+            span.id = "idTitleSpan" + i.toString();
+
+            let btClose = document.createElement("button");
+            btClose.setAttribute("class", "el-title-button");
+            btClose.id = "idTitleCloseBt" + i.toString();
+            btClose.onclick = onBtCloseClick;
+            btClose.innerText="关闭";
+
+            div.appendChild(label);
+            div.appendChild(span);
+            div.appendChild(btClose);
+
+            li.appendChild(div);
+        }
+
+        function logToMainLabel(str) {
+            let label = document.getElementById("idLabel");
+            label.style.display = "";
+            label.innerText = str;
+            console.log(str);
+        }
+           
+    </script>
+</body>
+</html>

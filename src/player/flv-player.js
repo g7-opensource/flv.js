@@ -90,6 +90,8 @@ class FlvPlayer {
 
         this.callbackStreamTime = null;
         this._mediaSourceEndCallback = null;
+
+        this._bufferSize = 0;
     }
 
     destroy() {
@@ -179,6 +181,10 @@ class FlvPlayer {
         }
     }
 
+    setBufferSize(bufferSize) {
+        this._bufferSize = bufferSize;
+    }
+
     detachMediaElement() {
         if (this._mediaElement) {
             this._msectl.detachMediaElement();
@@ -217,7 +223,7 @@ class FlvPlayer {
             this._mediaElement.currentTime = 0;
         }
 
-        this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
+        this._transmuxer = new Transmuxer(this._mediaDataSource, this._config, this._mediaElement, this._bufferSize);
 
         this._transmuxer.on(TransmuxingEvents.INIT_SEGMENT, (type, is) => {
             this._msectl.appendInitSegment(is);

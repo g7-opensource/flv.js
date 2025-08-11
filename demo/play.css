@@ -1,0 +1,95 @@
+.mainContainer {
+    background-color: grey;
+    width: 100%;
+    height: 100%;
+    padding:0;
+    margin: 0;
+}
+
+.mainLable {
+    position: absolute;
+    color: white;
+    left: 40%;
+    top: 40%;
+    font-size: x-large;
+}
+
+.mainUl {
+    position: absolute;
+    background-color:grey;
+    width: 100%;
+    height: 100%;
+    padding:0;
+    margin: 0;
+}
+
+.mainLi {
+    position: relative;
+    float:left; /*横屏*/
+    text-decoration: none;
+    list-style: none; /*去掉li的小圆点*/
+    width: 50%;
+    height: 50%;
+    padding:0;
+    margin: 0;
+    /* background-image: url(./bg.jpg); */
+    background-color: gainsboro;
+}
+
+.video-container{
+    top: 26px;
+    border-top: 1px solid rgb(0, 0, 0);
+
+    position: absolute;
+    /* top: 0; */
+    left: 0;
+    right: 0;
+    /* bottom: 0; */
+    width: 100%;
+    height:calc(100% - 27px);
+
+    object-fit: fill;
+}
+
+.log-container{
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    text-align: center;
+    color: red;
+}
+
+.title-container{
+    top: 0px;
+    border-top: 1px solid rgb(0, 0, 0);
+
+    height: 26px;
+    line-height: 26px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-color: #202020;
+    border-right: 1px solid #000;
+    text-align: center;
+    color: #fff;
+
+    z-index: 988;
+}
+
+.el-title-lable {
+    position: absolute;
+    color: white;
+    left: 10px;
+    font-size: x-small;
+}
+
+.el-title-button {
+    position: absolute;
+    color: white;
+    right: 10px;
+    top: 3px; 
+    background-color: gray;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
