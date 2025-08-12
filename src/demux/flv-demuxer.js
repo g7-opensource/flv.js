@@ -23,7 +23,6 @@ import HevcSPSParser from './hevc-sps-parser.js';
 import DemuxErrors from './demux-errors.js';
 import MediaInfo from '../core/media-info.js';
 import {IllegalStateException} from '../utils/exception.js';
-import { log } from 'console';
 
 function Swap16(src) {
     return (((src >>> 8) & 0xFF) |
