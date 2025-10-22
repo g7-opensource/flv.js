@@ -1,6 +1,6 @@
 {
   "name": "flv-g7.js",
-  "version": "1.8.5",
+  "version": "1.8.7",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "module": "./src/flv.js",

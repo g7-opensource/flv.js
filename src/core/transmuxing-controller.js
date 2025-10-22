@@ -248,7 +248,20 @@ class TransmuxingController {
             consumed = this._demuxer.parseChunks(data, byteStart);
         } else if ((probeData = FLVDemuxer.probe(data)).match) {
             // Always create new FLVDemuxer
-            this._demuxer = new FLVDemuxer(probeData, this._config, this._mediaElement, this._bufferSize);
+            let app = '';
+            if (this._mediaDataSource.url != null && this._mediaDataSource.url != '') {
+                let url = this._mediaDataSource.url;
+                if (url.indexOf('?') >= 0) {
+                    let params = url.substring(url.lastIndexOf('?') + 1);
+                    params.split('&').forEach(param => {
+                        let [key, value] = param.split('=');
+                        if (key === 'app') {
+                            app = value;
+                        }
+                    });
+                }
+            }
+            this._demuxer = new FLVDemuxer(probeData, this._config, this._mediaElement, this._bufferSize, app);
 
             if (!this._remuxer) {
                 this._remuxer = new MP4Remuxer(this._config);

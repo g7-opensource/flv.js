@@ -92,12 +92,18 @@ const PLAYER_SPEED_FAST_5 = -5;
 
 class FLVDemuxer {
 
-    constructor(probeData, config, mediaElement, bufferSize) {
+    constructor(probeData, config, mediaElement, bufferSize, app) {
         this.TAG = 'FLVDemuxer';
 
         this._config = config;
         this._mediaElement = mediaElement;
         this._bufferSize = bufferSize;
+        this._app = app;
+        this._isSpeech = false;
+        if (this._app === 'g7-jt808-speech') {
+            this._isSpeech = true;
+        }
+        this._bNeedQuick = false;
 
         this._onError = null;
         this._onMediaInfo = null;
@@ -423,6 +429,23 @@ class FLVDemuxer {
 
                         this._lastAudioOrgTs = timestamp;
                         timestamp = this._lastAudioTs;
+                    }
+
+                    //语音对讲时根据延迟动态追赶
+                    if (this._isSpeech) {
+                        if (delay >= 3.7) {
+                            this._mediaElement.currentTime = this._mediaElement.buffered.end(0) - 0.9;
+                            this._bNeedQuick = false;
+                            this._mediaElement.playbackRate = 1;
+                        }
+                        else if (delay <= 0.9) {
+                            this._bNeedQuick = false;
+                            this._mediaElement.playbackRate = 1;
+                        }
+                        else if (this._bNeedQuick || delay > 1.5) {
+                            this._bNeedQuick = true;
+                            this._mediaElement.playbackRate = 1.2;
+                        }
                     }
 
                     this._parseAudioData(chunk, dataOffset, dataSize, timestamp);
