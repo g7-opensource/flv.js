@@ -868,17 +868,27 @@ class FLVDemuxer {
             extensionSamplingIndex = samplingIndex;
         } else {
             // for other browsers, e.g. chrome...
-            // Always use HE-AAC to make it easier to switch aac codec profile
-            audioObjectType = 5;
-            extensionSamplingIndex = samplingIndex;
-            config = new Array(4);
-
-            if (samplingIndex >= 6) {
-                extensionSamplingIndex = samplingIndex - 3;
-            } else if (channelConfig === 1) {  // Mono channel
+            // Safari historically has weaker HE‑AAC (SBR) support in MSE in some versions.
+            // Prefer AAC‑LC on Safari for compatibility.
+            const isSafari = (userAgent.indexOf('safari') !== -1 && userAgent.indexOf('chrome') === -1 && userAgent.indexOf('chromium') === -1);
+            if (isSafari) {
+                // Safari: prefer LC‑AAC for better compatibility
                 audioObjectType = 2;
                 config = new Array(2);
                 extensionSamplingIndex = samplingIndex;
+            } else {
+                // other browsers: prefer HE‑AAC to allow SBR when applicable
+                audioObjectType = 5;
+                extensionSamplingIndex = samplingIndex;
+                config = new Array(4);
+
+                if (samplingIndex >= 6) {
+                    extensionSamplingIndex = samplingIndex - 3;
+                } else if (channelConfig === 1) {  // Mono channel
+                    audioObjectType = 2;
+                    config = new Array(2);
+                    extensionSamplingIndex = samplingIndex;
+                }
             }
         }
 
