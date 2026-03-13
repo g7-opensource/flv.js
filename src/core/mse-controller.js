@@ -52,6 +52,9 @@ class MSEController {
         this._isBufferFull = false;
         this._hasPendingEos = false;
 
+        this._lastBufferedStart = 0;
+        this._needSeekAfterCodecChange = false;
+
         this._requireSetMediaDuration = false;
         this._pendingMediaDuration = 0;
 
@@ -186,7 +189,13 @@ class MSEController {
         Log.v(this.TAG, 'Received Initialization Segment, mimeType: ' + mimeType);
         this._lastInitSegments[is.type] = is;
 
-        if (mimeType !== this._mimeTypes[is.type]) {
+        //mimeType的格式为container/type; codecs="codec1,codec2"，eg: video/mp4; codecs="avc1.640028"
+        //因此视频的mimeType仅包含SPS里面的profile、level信息，不包含分辨率
+        //因此当分辨率发生变化而编码参数没变时（例如部分设备切换主子码流时），mimeType并不会改变，
+        //但我们需要清空SourceBuffer以避免buffered出现gap导致播放卡住，因此取消了如下判断
+        //记录：mse提供了SourceBuffer.changeType(mimeType)接口用于切换mimeType，仅分辨率改变无须使用该接口，需注意changeType需要在SourceBuffer未更新且无待移除范围时调用，否则会抛出InvalidStateError异常
+        //if (mimeType !== this._mimeTypes[is.type]) 
+        {
             if (!this._mimeTypes[is.type]) {  // empty, first chance create sourcebuffer
                 firstInitSegment = true;
                 try {
@@ -200,6 +209,7 @@ class MSEController {
                 }
             } else {
                 Log.v(this.TAG, `Notice: ${is.type} mimeType changed, origin: ${this._mimeTypes[is.type]}, target: ${mimeType}`);
+                this._clearSourceBufferForCodecChange(is.type);
             }
             this._mimeTypes[is.type] = mimeType;
         }
@@ -219,6 +229,72 @@ class MSEController {
             this._requireSetMediaDuration = true;
             this._pendingMediaDuration = is.mediaDuration / 1000;  // in seconds
             this._updateMediaSourceDuration();
+        }
+    }
+
+    _clearSourceBufferForCodecChange(type) {
+        // Clear SourceBuffer when codec/mimeType changes to avoid buffered gaps
+        let sb = this._sourceBuffers[type];
+        if (!sb) {
+            return;
+        }
+
+        let buffered = sb.buffered;
+        if (buffered.length === 0) {
+            return;  // Nothing to clear
+        }
+
+        // Save current playback position
+        let currentTime = this._mediaElement ? this._mediaElement.currentTime : 0;
+        this._lastBufferedStart = this._mediaElement.buffered.start(0);
+        Log.v(this.TAG, `Clearing ${type} SourceBuffer for codec change, currentTime: ${currentTime}, lastStart: ${this._lastBufferedStart}`);
+
+        // Mark that we need to adjust playback position after buffer is cleared
+        this._needSeekAfterCodecChange = true;
+
+        // Clear all buffered ranges
+        for (let i = 0; i < buffered.length; i++) {
+            let start = buffered.start(i);
+            let end = buffered.end(i);
+            this._pendingRemoveRanges[type].push({start, end});
+        }
+
+        // Clear segment info lists for this type
+        if (type === 'video') {
+            this._idrList.clear();
+        }
+
+        // Trigger removal if not updating
+        if (!sb.updating) {
+            this._doRemoveRanges();
+        }
+    }
+
+    _adjustPlaybackPositionAfterCodecChange() {
+        if (!this._mediaElement) {
+            return;
+        }
+
+        let currentTime = this._mediaElement.currentTime;
+        let buffered = this._mediaElement.buffered;
+
+        if (buffered.length === 0 || this._lastBufferedStart === buffered.start(0)) {
+            Log.v(this.TAG, 'No buffered data after codec change, waiting for new data...');
+            return;
+        }
+        this._needSeekAfterCodecChange = false;
+        Log.v(this.TAG, 'buffered ranges after codec change: ' + buffered.start(0) + ' - ' + buffered.end(buffered.length - 1));
+
+        // Check if currentTime is before the first buffered range
+        let firstBufferStart = buffered.start(0);
+        if (currentTime < firstBufferStart) {
+            Log.v(this.TAG, `After codec change, currentTime (${currentTime.toFixed(2)}) < first buffer start (${firstBufferStart.toFixed(2)}), ` +
+                        `seeking to ${firstBufferStart.toFixed(2)}`);
+            try {
+                this._mediaElement.currentTime = firstBufferStart;
+            } catch (e) {
+                Log.v(this.TAG, `Failed to adjust currentTime after codec change: ${e.message}`);
+            }
         }
     }
 
@@ -527,6 +603,13 @@ class MSEController {
         } else if (this._hasPendingEos) {
             this.endOfStream();
         }
+
+        // After buffer operations complete, check if we need to seek due to codec change
+        if (this._needSeekAfterCodecChange) {
+            
+            this._adjustPlaybackPositionAfterCodecChange();
+        }
+
         this._emitter.emit(MSEEvents.UPDATE_END);
     }
 
